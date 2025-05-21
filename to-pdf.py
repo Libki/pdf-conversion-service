@@ -8,7 +8,6 @@ from flask import Flask, after_this_request, render_template, request, send_file
 from subprocess import call
 
 UPLOAD_FOLDER = '/tmp'
-ALLOWED_EXTENSIONS = set(['doc', 'docx', 'xls', 'xlsx'])
 
 app = Flask(__name__)
 
@@ -17,11 +16,6 @@ app = Flask(__name__)
 def convert_file(output_dir, input_file):
     call('libreoffice --headless --convert-to pdf --outdir %s %s ' %
          (output_dir, input_file), shell=True)
-
-
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -39,13 +33,11 @@ def api():
         file = request.files['file']
         if file.filename == '':
             return 'No file provided'
-        if file and allowed_file(file.filename):
+        if file:
             file.save(input_file_path)
 
     if request.method == 'GET':
         url = request.args.get('url', type=str)
-        if not url:
-            return render_template('index.html')
         # Download from URL
         response = requests.get(url, stream=True)
         with open(input_file_path, 'wb') as file:
